@@ -33,6 +33,8 @@ class ADemoCharacter : public ACharacter
 public:
 	ADemoCharacter();
 
+	virtual void Tick(float DeltaSeconds) override;
+
 protected:
 	virtual void BeginPlay();
 
@@ -65,6 +67,10 @@ protected:
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
 	 */
 	void LookUpAtRate(float Rate);
+
+	void AccSpeed();
+
+	void ResetSpeed();
 
 	struct TouchData
 	{

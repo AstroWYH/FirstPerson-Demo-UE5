@@ -6,7 +6,9 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/InputSettings.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -34,6 +36,9 @@ ADemoCharacter::ADemoCharacter()
 	Mesh1P->CastShadow = false;
 	Mesh1P->SetRelativeRotation(FRotator(1.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-0.5f, -4.4f, -155.7f));
+
+	// set jump max count
+	JumpMaxCount = 2;
 }
 
 void ADemoCharacter::BeginPlay()
@@ -57,7 +62,7 @@ void ADemoCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInpu
 	PlayerInputComponent->BindAction("PrimaryAction", IE_Pressed, this, &ADemoCharacter::OnPrimaryAction);
 
 	// Enable touchscreen input
-	EnableTouchscreenMovement(PlayerInputComponent);
+	// EnableTouchscreenMovement(PlayerInputComponent);
 
 	// Bind movement events
 	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &ADemoCharacter::MoveForward);
@@ -70,6 +75,10 @@ void ADemoCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInpu
 	PlayerInputComponent->BindAxis("Look Up / Down Mouse", this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("Turn Right / Left Gamepad", this, &ADemoCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("Look Up / Down Gamepad", this, &ADemoCharacter::LookUpAtRate);
+
+	// movement speed switch
+	PlayerInputComponent->BindAction("MovementSpeedSwitch", IE_Pressed, this, &ADemoCharacter::AccSpeed);
+	PlayerInputComponent->BindAction("MovementSpeedSwitch", IE_Released, this, &ADemoCharacter::ResetSpeed);
 }
 
 void ADemoCharacter::OnPrimaryAction()
@@ -78,30 +87,30 @@ void ADemoCharacter::OnPrimaryAction()
 	OnUseItem.Broadcast();
 }
 
-void ADemoCharacter::BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
-{
-	if (TouchItem.bIsPressed == true)
-	{
-		return;
-	}
-	if ((FingerIndex == TouchItem.FingerIndex) && (TouchItem.bMoved == false))
-	{
-		OnPrimaryAction();
-	}
-	TouchItem.bIsPressed = true;
-	TouchItem.FingerIndex = FingerIndex;
-	TouchItem.Location = Location;
-	TouchItem.bMoved = false;
-}
-
-void ADemoCharacter::EndTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
-{
-	if (TouchItem.bIsPressed == false)
-	{
-		return;
-	}
-	TouchItem.bIsPressed = false;
-}
+// void ADemoCharacter::BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
+// {
+// 	if (TouchItem.bIsPressed == true)
+// 	{
+// 		return;
+// 	}
+// 	if ((FingerIndex == TouchItem.FingerIndex) && (TouchItem.bMoved == false))
+// 	{
+// 		OnPrimaryAction();
+// 	}
+// 	TouchItem.bIsPressed = true;
+// 	TouchItem.FingerIndex = FingerIndex;
+// 	TouchItem.Location = Location;
+// 	TouchItem.bMoved = false;
+// }
+//
+// void ADemoCharacter::EndTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
+// {
+// 	if (TouchItem.bIsPressed == false)
+// 	{
+// 		return;
+// 	}
+// 	TouchItem.bIsPressed = false;
+// }
 
 void ADemoCharacter::MoveForward(float Value)
 {
@@ -134,15 +143,65 @@ void ADemoCharacter::LookUpAtRate(float Rate)
 	AddControllerPitchInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
 }
 
-bool ADemoCharacter::EnableTouchscreenMovement(class UInputComponent* PlayerInputComponent)
+void ADemoCharacter::AccSpeed()
 {
-	if (FPlatformMisc::SupportsTouchInput() || GetDefault<UInputSettings>()->bUseMouseForTouch)
-	{
-		PlayerInputComponent->BindTouch(EInputEvent::IE_Pressed, this, &ADemoCharacter::BeginTouch);
-		PlayerInputComponent->BindTouch(EInputEvent::IE_Released, this, &ADemoCharacter::EndTouch);
+	UCharacterMovementComponent* CharacterMovementPtr = GetCharacterMovement();
 
-		return true;
+	if (CharacterMovementPtr)
+	{
+		CharacterMovementPtr->MaxWalkSpeed = 2000.0f;
 	}
 
-	return false;
+	UE_LOG(LogTemp, Warning, TEXT("wyh [%s] movementspeed:%f"), *FString(__FUNCTION__),
+	       CharacterMovementPtr->MaxWalkSpeed);
+}
+
+void ADemoCharacter::ResetSpeed()
+{
+	UCharacterMovementComponent* CharacterMovementPtr = GetCharacterMovement();
+
+	if (CharacterMovementPtr)
+	{
+		CharacterMovementPtr->MaxWalkSpeed = 600.0f;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("wyh [%s] movementspeed:%f"), *FString(__FUNCTION__),
+	       CharacterMovementPtr->MaxWalkSpeed);
+}
+
+// bool ADemoCharacter::EnableTouchscreenMovement(class UInputComponent* PlayerInputComponent)
+// {
+// 	if (FPlatformMisc::SupportsTouchInput() || GetDefault<UInputSettings>()->bUseMouseForTouch)
+// 	{
+// 		PlayerInputComponent->BindTouch(EInputEvent::IE_Pressed, this, &ADemoCharacter::BeginTouch);
+// 		PlayerInputComponent->BindTouch(EInputEvent::IE_Released, this, &ADemoCharacter::EndTouch);
+//
+// 		return true;
+// 	}
+//
+// 	return false;
+// }
+
+void ADemoCharacter::Tick(float DeltaSeconds)
+{
+	// get start and end location of linetrace
+	FVector CameraLocationStart = FirstPersonCameraComponent->GetComponentLocation();
+	FVector CameraLocationEnd = CameraLocationStart + FirstPersonCameraComponent->GetForwardVector() * 1500;
+
+	// FHitResult OutHit;
+	// UWorld* World = FirstPersonCameraComponent->GetWorld();
+	// FCollisionQueryParams CollisionParams;
+	// CollisionParams.AddIgnoredActor(this);
+	// World->LineTraceSingleByChannel(OutHit, CameraLocationStart, CameraLocationEnd, ECC_Visibility);
+
+	// call api:UKismetSystemLibrary::LineTraceSingle
+	FHitResult OutHit;
+	UWorld* World = FirstPersonCameraComponent->GetWorld();
+	// FCollisionQueryParams CollisionParams;
+	// CollisionParams.AddIgnoredActor(this);
+	ETraceTypeQuery TraceChannel = UEngineTypes::ConvertToTraceType(ECC_Visibility);
+	UKismetSystemLibrary::LineTraceSingle(World, CameraLocationStart,
+	                                      CameraLocationEnd, TraceChannel, false, TArray<AActor*>(),
+	                                      EDrawDebugTrace::Type::ForDuration, OutHit, true, FLinearColor::Red,
+	                                      FLinearColor::Green, 1.0f);
 }
