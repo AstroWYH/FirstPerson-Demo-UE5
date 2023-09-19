@@ -76,7 +76,7 @@ void UTP_WeaponComponent::AttachWeapon(ADemoCharacter* TargetCharacter)
 	Character = TargetCharacter;
 	if (Character != nullptr)
 	{
-		// Attach the weapon to the First Person Character
+		// Attach the weapon to the First Person  Character
 		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
 		GetOwner()->AttachToComponent(Character->GetMesh1P(), AttachmentRules, FName(TEXT("GripPoint")));
 
