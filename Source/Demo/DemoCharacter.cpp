@@ -87,31 +87,6 @@ void ADemoCharacter::OnPrimaryAction()
 	OnUseItem.Broadcast();
 }
 
-// void ADemoCharacter::BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
-// {
-// 	if (TouchItem.bIsPressed == true)
-// 	{
-// 		return;
-// 	}
-// 	if ((FingerIndex == TouchItem.FingerIndex) && (TouchItem.bMoved == false))
-// 	{
-// 		OnPrimaryAction();
-// 	}
-// 	TouchItem.bIsPressed = true;
-// 	TouchItem.FingerIndex = FingerIndex;
-// 	TouchItem.Location = Location;
-// 	TouchItem.bMoved = false;
-// }
-//
-// void ADemoCharacter::EndTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
-// {
-// 	if (TouchItem.bIsPressed == false)
-// 	{
-// 		return;
-// 	}
-// 	TouchItem.bIsPressed = false;
-// }
-
 void ADemoCharacter::MoveForward(float Value)
 {
 	if (Value != 0.0f)
@@ -123,7 +98,6 @@ void ADemoCharacter::MoveForward(float Value)
 
 void ADemoCharacter::MoveRight(float Value)
 {
-	// UE_LOG(LogTemp, Warning, TEXT("wyh right"));
 	if (Value != 0.0f)
 	{
 		// add movement in that direction
@@ -152,8 +126,10 @@ void ADemoCharacter::AccSpeed()
 		CharacterMovementPtr->MaxWalkSpeed = 2000.0f;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("wyh [%s] movementspeed:%f"), *FString(__FUNCTION__),
-	       CharacterMovementPtr->MaxWalkSpeed);
+	// Points++;
+
+	UE_LOG(LogTemp, Warning, TEXT("wyh [%s] movementspeed:%f Points:%d"), *FString(__FUNCTION__),
+	       CharacterMovementPtr->MaxWalkSpeed, Points);
 }
 
 void ADemoCharacter::ResetSpeed()
@@ -168,19 +144,6 @@ void ADemoCharacter::ResetSpeed()
 	UE_LOG(LogTemp, Warning, TEXT("wyh [%s] movementspeed:%f"), *FString(__FUNCTION__),
 	       CharacterMovementPtr->MaxWalkSpeed);
 }
-
-// bool ADemoCharacter::EnableTouchscreenMovement(class UInputComponent* PlayerInputComponent)
-// {
-// 	if (FPlatformMisc::SupportsTouchInput() || GetDefault<UInputSettings>()->bUseMouseForTouch)
-// 	{
-// 		PlayerInputComponent->BindTouch(EInputEvent::IE_Pressed, this, &ADemoCharacter::BeginTouch);
-// 		PlayerInputComponent->BindTouch(EInputEvent::IE_Released, this, &ADemoCharacter::EndTouch);
-//
-// 		return true;
-// 	}
-//
-// 	return false;
-// }
 
 void ADemoCharacter::Tick(float DeltaSeconds)
 {
@@ -202,6 +165,9 @@ void ADemoCharacter::Tick(float DeltaSeconds)
 	ETraceTypeQuery TraceChannel = UEngineTypes::ConvertToTraceType(ECC_Visibility);
 	UKismetSystemLibrary::LineTraceSingle(World, CameraLocationStart,
 	                                      CameraLocationEnd, TraceChannel, false, TArray<AActor*>(),
-	                                      EDrawDebugTrace::Type::ForDuration, OutHit, true, FLinearColor::Red,
+	                                      EDrawDebugTrace::Type::ForOneFrame, OutHit, true, FLinearColor::Red,
 	                                      FLinearColor::Green, 1.0f);
+
+	// UE_LOG(LogTemp, Warning, TEXT("[wyh] [%s] Points:%d"), *FString(__FUNCTION__),
+	//        Points);
 }

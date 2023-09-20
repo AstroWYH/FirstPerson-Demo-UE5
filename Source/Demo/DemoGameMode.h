@@ -13,9 +13,6 @@ class ADemoGameMode : public AGameModeBase
 
 public:
 	ADemoGameMode();
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	int32 Points;
 };
 
 

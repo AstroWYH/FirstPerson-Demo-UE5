@@ -35,22 +35,6 @@ ADemoProjectile::ADemoProjectile()
 	InitialLifeSpan = 3.0f;
 
 	UE_LOG(LogTemp, Warning, TEXT("wyh [%s] fire"), *FString(__FUNCTION__));
-
-	// UWorld* world = GetWorld();
-	// if (world)
-	// {
-	// 	UE_LOG(LogTemp, Warning, TEXT("wyh [%s] world is not null"), *FString(__FUNCTION__));
-	// }
-	// else
-	// {
-	// 	UE_LOG(LogTemp, Warning, TEXT("wyh [%s] world is null"), *FString(__FUNCTION__));
-	// }
-	// ADemoGameMode* gm = Cast<ADemoGameMode>(GetWorld()->GetAuthGameMode());
-	// if (gm != nullptr)
-	// {
-	// 	gm->Points++;
-	// 	UE_LOG(LogTemp, Warning, TEXT("wyh [%s] gm:%d"), *FString(__FUNCTION__), gm->Points);
-	// }
 }
 
 void ADemoProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
