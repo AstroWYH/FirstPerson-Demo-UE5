@@ -45,6 +45,8 @@ void ADemoCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
+
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &ADemoCharacter::OnRifleOverlap);
 }
 
 //////////////////////////////////////////////////////////////////////////// Input
@@ -61,8 +63,11 @@ void ADemoCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInpu
 	// Bind fire event
 	PlayerInputComponent->BindAction("PrimaryAction", IE_Pressed, this, &ADemoCharacter::OnPrimaryAction);
 
-	// Enable touchscreen input
-	// EnableTouchscreenMovement(PlayerInputComponent);
+	// Damage Health
+	PlayerInputComponent->BindAction("F", IE_Pressed, this, &ADemoCharacter::DamageHealth);
+
+	// Reset Ammo
+	PlayerInputComponent->BindAction("R", IE_Pressed, this, &ADemoCharacter::ResetAmmo);
 
 	// Bind movement events
 	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &ADemoCharacter::MoveForward);
@@ -81,10 +86,32 @@ void ADemoCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInpu
 	PlayerInputComponent->BindAction("MovementSpeedSwitch", IE_Released, this, &ADemoCharacter::ResetSpeed);
 }
 
+void ADemoCharacter::OnRifleOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+                                    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
+                                    const FHitResult& SweepResult)
+{
+	AmmoComponent = OtherComp;
+}
+
 void ADemoCharacter::OnPrimaryAction()
 {
 	// Trigger the OnItemUsed Event
 	OnUseItem.Broadcast();
+}
+
+void ADemoCharacter::DamageHealth()
+{
+	Health -= 0.25f;
+}
+
+void ADemoCharacter::ConsumeEnergy()
+{
+	Energy -= 0.25f;
+}
+
+void ADemoCharacter::ResetAmmo()
+{
+	AmmoCount = MaxAmmoCount;
 }
 
 void ADemoCharacter::MoveForward(float Value)
@@ -125,11 +152,6 @@ void ADemoCharacter::AccSpeed()
 	{
 		CharacterMovementPtr->MaxWalkSpeed = 2000.0f;
 	}
-
-	// Points++;
-
-	UE_LOG(LogTemp, Warning, TEXT("wyh [%s] movementspeed:%f Points:%d"), *FString(__FUNCTION__),
-	       CharacterMovementPtr->MaxWalkSpeed, Points);
 }
 
 void ADemoCharacter::ResetSpeed()
@@ -140,34 +162,23 @@ void ADemoCharacter::ResetSpeed()
 	{
 		CharacterMovementPtr->MaxWalkSpeed = 600.0f;
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("wyh [%s] movementspeed:%f"), *FString(__FUNCTION__),
-	       CharacterMovementPtr->MaxWalkSpeed);
 }
 
 void ADemoCharacter::Tick(float DeltaSeconds)
 {
-	// get start and end location of linetrace
-	FVector CameraLocationStart = FirstPersonCameraComponent->GetComponentLocation();
-	FVector CameraLocationEnd = CameraLocationStart + FirstPersonCameraComponent->GetForwardVector() * 1500;
+	if (AmmoComponent)
+	{
+		FVector LocationStart = AmmoComponent->GetComponentLocation();
+		FVector LocationEnd = LocationStart + AmmoComponent->GetForwardVector() * 5000;
+		FHitResult OutHit;
+		UWorld* World = AmmoComponent->GetWorld();
+		ETraceTypeQuery TraceChannel = UEngineTypes::ConvertToTraceType(ECC_Visibility);
+		UKismetSystemLibrary::LineTraceSingle(World, LocationStart,
+		                                      LocationEnd, TraceChannel, false, TArray<AActor*>(),
+		                                      EDrawDebugTrace::Type::ForDuration, OutHit, true, FLinearColor::Red,
+		                                      FLinearColor::Green, 0.1f);
+		UE_LOG(LogTemp, Warning, TEXT("[wyh] [%s] Line Trace"), *FString(__FUNCTION__));
+	}
 
-	// FHitResult OutHit;
-	// UWorld* World = FirstPersonCameraComponent->GetWorld();
-	// FCollisionQueryParams CollisionParams;
-	// CollisionParams.AddIgnoredActor(this);
-	// World->LineTraceSingleByChannel(OutHit, CameraLocationStart, CameraLocationEnd, ECC_Visibility);
-
-	// call api:UKismetSystemLibrary::LineTraceSingle
-	FHitResult OutHit;
-	UWorld* World = FirstPersonCameraComponent->GetWorld();
-	// FCollisionQueryParams CollisionParams;
-	// CollisionParams.AddIgnoredActor(this);
-	ETraceTypeQuery TraceChannel = UEngineTypes::ConvertToTraceType(ECC_Visibility);
-	UKismetSystemLibrary::LineTraceSingle(World, CameraLocationStart,
-	                                      CameraLocationEnd, TraceChannel, false, TArray<AActor*>(),
-	                                      EDrawDebugTrace::Type::ForOneFrame, OutHit, true, FLinearColor::Red,
-	                                      FLinearColor::Green, 1.0f);
-
-	// UE_LOG(LogTemp, Warning, TEXT("[wyh] [%s] Points:%d"), *FString(__FUNCTION__),
-	//        Points);
+	UE_LOG(LogTemp, Warning, TEXT("[wyh] [%s] AmmoComponent:%p"), *FString(__FUNCTION__), AmmoComponent);
 }

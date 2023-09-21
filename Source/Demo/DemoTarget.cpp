@@ -14,12 +14,8 @@ ADemoTarget::ADemoTarget()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	TargetCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("TargetCapsule"));
-	TargetCapsule->SetRelativeScale3D(FVector(2.0f, 2.0f, 2.0f));
-	RootComponent = TargetCapsule;
-
 	TargetMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TargetMesh"));
-	TargetMesh->SetupAttachment(TargetCapsule);
+	RootComponent = TargetMesh;
 }
 
 // Called when the game starts or when spawned
@@ -27,7 +23,7 @@ void ADemoTarget::BeginPlay()
 {
 	Super::BeginPlay();
 
-	TargetCapsule->OnComponentHit.AddDynamic(this, &ADemoTarget::OnHit);
+	TargetMesh->OnComponentHit.AddDynamic(this, &ADemoTarget::OnHit);
 }
 
 // Called every frame
@@ -48,6 +44,6 @@ void ADemoTarget::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 	Points++;
 	FirstPerson->SetPoints(Points);
 
-	UE_LOG(LogTemp, Warning, TEXT("wyh [%s] Points:%d"), *FString(__FUNCTION__),
+	UE_LOG(LogTemp, Warning, TEXT("[wyh] [%s] Points:%d"), *FString(__FUNCTION__),
 	       FirstPerson->GetPoints());
 }

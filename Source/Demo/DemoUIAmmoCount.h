@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "DemoUIPoints.generated.h"
+#include "DemoUIAmmoCount.generated.h"
 
 UCLASS()
-class DEMO_API UDemoUIPoints : public UUserWidget
+class DEMO_API UDemoUIAmmoCount : public UUserWidget
 {
 	GENERATED_BODY()
 
@@ -16,15 +16,19 @@ public:
 	class ADemoCharacter* FirstPerson;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget))
-	class UTextBlock* PointsText;
+	class UTextBlock* AmmoCountText;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget))
+	class UTextBlock* MaxAmmoCountText;
 
 	UFUNCTION()
-	FText GetPoints();
-	
+	FText GetAmmoCount();
+
+	UFUNCTION()
+	FText GetMaxAmmoCount();
+
 protected:
 	virtual void NativeConstruct() override;
 
 	virtual bool Initialize() override;
-
-	// virtual void BeginDestroy() override;
 };

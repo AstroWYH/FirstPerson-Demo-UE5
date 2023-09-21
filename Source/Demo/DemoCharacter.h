@@ -40,9 +40,30 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOnUseItem OnUseItem;
 
+	UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
+	UPrimitiveComponent* AmmoComponent;
+
+	// getter and setter
 	int GetPoints() { return Points; }
 
 	void SetPoints(int NewPoints) { Points = NewPoints; }
+
+	float GetHealth() { return Health; }
+
+	float GetEnergy() const { return Energy; }
+
+	int GetAmmoCount() const { return AmmoCount; }
+
+	void SetAmmoCount(int NewAmmoCount) { AmmoCount = NewAmmoCount; }
+
+	int GetMaxAmmoCount() const { return MaxAmmoCount; }
+
+	void GetMaxAmmoCount(int NewMaxAmmoCount) { AmmoCount = NewMaxAmmoCount; }
+
+	UFUNCTION()
+	void OnRifleOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	                    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
+	                    const FHitResult& SweepResult);
 
 protected:
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
@@ -55,6 +76,12 @@ protected:
 
 	/** Fires a projectile. */
 	void OnPrimaryAction();
+
+	void DamageHealth();
+
+	void ConsumeEnergy();
+
+	void ResetAmmo();
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);
@@ -84,5 +111,17 @@ protected:
 	// End of APawn interface
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	int Points;
+	int Points = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	float Health = 1.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	float Energy = 1.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	int AmmoCount = 25;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	int MaxAmmoCount = 25;
 };

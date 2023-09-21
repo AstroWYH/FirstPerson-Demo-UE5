@@ -21,23 +21,19 @@ bool UDemoUIPoints::Initialize()
 {
 	Super::Initialize();
 
-	PointsText->SetText(FText::FromString("Null"));
+	if (PointsText)
+	{
+		PointsText->SetText(FText::FromString("Null"));
 
-	// call every frame, can't be called in NativeConstruct()
-	PointsText->TextDelegate.BindUFunction(this, FName("GetPoints"));
-
+		// call every frame, can't be called in NativeConstruct()
+		PointsText->TextDelegate.BindUFunction(this, FName("GetPoints"));
+	}
+	
 	return true;
 }
-
-// void UDemoUIPoints::BeginDestroy()
-// {
-// 	PointsText->TextDelegate.Unbind();
-// 	Super::BeginDestroy();
-// }
 
 FText UDemoUIPoints::GetPoints()
 {
 	FString Points = FString::Printf(TEXT("%d"), FirstPerson->GetPoints());
-	// UE_LOG(LogTemp, Warning, TEXT("wyh [%s] Points:%d"), *FString(__FUNCTION__), FirstPerson->GetPoints());
 	return FText::FromString(Points);
 }

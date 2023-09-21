@@ -4,10 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "DemoUIPoints.generated.h"
+#include "DemoUIHud.generated.h"
 
+/**
+ * 
+ */
 UCLASS()
-class DEMO_API UDemoUIPoints : public UUserWidget
+class DEMO_API UDemoUIHud : public UUserWidget
 {
 	GENERATED_BODY()
 
@@ -16,15 +19,19 @@ public:
 	class ADemoCharacter* FirstPerson;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget))
-	class UTextBlock* PointsText;
+	class UProgressBar* HealthBar;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget))
+	class UProgressBar* EnergyBar;
 
 	UFUNCTION()
-	FText GetPoints();
-	
+	float GetHealth();
+
+	UFUNCTION()
+	float GetEnergy();
+
 protected:
 	virtual void NativeConstruct() override;
 
 	virtual bool Initialize() override;
-
-	// virtual void BeginDestroy() override;
 };

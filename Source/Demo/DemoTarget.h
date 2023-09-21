@@ -16,9 +16,6 @@ public:
 	ADemoTarget();
 
 	UPROPERTY(EditAnywhere)
-	class UCapsuleComponent* TargetCapsule;
-
-	UPROPERTY(EditAnywhere)
 	class UStaticMeshComponent* TargetMesh;
 
 	// Called every frame
