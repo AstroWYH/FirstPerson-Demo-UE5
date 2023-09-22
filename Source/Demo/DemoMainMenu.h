@@ -43,8 +43,8 @@ public:
 	TSubclassOf<class UDemoUIPoints> UIPointsBP;
 
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<class UDemoUIAmmoCount> UIAmmoBP;
-	
+	TSubclassOf<class UUserWidget> UIDemoCppBP;
+
 protected:
 	virtual void NativeConstruct() override;
 

@@ -25,7 +25,17 @@ public:
 	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	           FVector NormalImpulse, const FHitResult& Hit);
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Demo)
+	int A = 500;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Demo)
+	int B = 100;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
+	float RunningTime = 0.0f;
+
+	FVector InitLocation;
 };

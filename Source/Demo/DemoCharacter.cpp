@@ -2,12 +2,15 @@
 
 #include "DemoCharacter.h"
 #include "DemoProjectile.h"
+#include "DemoTarget.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
+#include "Engine/StaticMeshActor.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/InputSettings.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 
@@ -46,7 +49,28 @@ void ADemoCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
+	// Bind OnRifleOverlap
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &ADemoCharacter::OnRifleOverlap);
+
+	// Reserve Scene Init State
+	TArray<AActor*> FoundActors;
+	TSubclassOf<AActor> BluBoxClass = AStaticMeshActor::StaticClass();
+	UGameplayStatics::GetAllActorsOfClassWithTag(GetWorld(), BluBoxClass, "BlueBox", FoundActors);
+
+	for (AActor* BlueBox : FoundActors)
+	{
+		SceneInitState.Push(BlueBox->GetTransform());
+	}
+	SceneInitState.Push(GetTransform());
+
+	for (auto Val : SceneInitState)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[wyh] [%s] SceneInitState.Num():%d Val:%s"),
+		       *FString(__FUNCTION__), SceneInitState.Num(), *Val.ToString());
+	}
+
+	JumpActionDelegate.AddDynamic(this, &ACharacter::Jump);
+	JumpActionDelegate.AddDynamic(this, &ADemoCharacter::ConsumeEnergy);
 }
 
 //////////////////////////////////////////////////////////////////////////// Input
@@ -57,7 +81,7 @@ void ADemoCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInpu
 	check(PlayerInputComponent);
 
 	// Bind jump events
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ADemoCharacter::OnJump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
 	// Bind fire event
@@ -90,13 +114,33 @@ void ADemoCharacter::OnRifleOverlap(UPrimitiveComponent* OverlappedComponent, AA
                                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
                                     const FHitResult& SweepResult)
 {
-	AmmoComponent = OtherComp;
+	// For enable line trace
+	bIsPickUp = true;
+
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClassWithTag(GetWorld(), DemoTargetBP, "DefaultTarget", FoundActors);
+	check(FoundActors[0]);
+	AActor* DefaultTarget = FoundActors[0];
+	FTransform DefaultTranslation = DefaultTarget->GetTransform();
+	FVector DefaultLocation = DefaultTranslation.GetLocation();
+	FRotator DefaultRotation = DefaultTranslation.GetRotation().Rotator();
+	FVector DefaultScale = DefaultTranslation.GetScale3D();
+
+	FVector ALocation = DefaultLocation - FVector();
+
+	ADemoTarget* SpawnTargetA = GetWorld()->SpawnActor<ADemoTarget>(DemoTargetBP, DefaultTarget->GetTransform());
 }
 
 void ADemoCharacter::OnPrimaryAction()
 {
 	// Trigger the OnItemUsed Event
 	OnUseItem.Broadcast();
+}
+
+void ADemoCharacter::OnJump()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[wyh] [%s]"), *FString(__FUNCTION__));
+	JumpActionDelegate.Broadcast();
 }
 
 void ADemoCharacter::DamageHealth()
@@ -106,6 +150,7 @@ void ADemoCharacter::DamageHealth()
 
 void ADemoCharacter::ConsumeEnergy()
 {
+	UE_LOG(LogTemp, Warning, TEXT("[wyh] [%s]"), *FString(__FUNCTION__));
 	Energy -= 0.25f;
 }
 
@@ -166,19 +211,17 @@ void ADemoCharacter::ResetSpeed()
 
 void ADemoCharacter::Tick(float DeltaSeconds)
 {
-	if (AmmoComponent)
+	if (bIsPickUp)
 	{
-		FVector LocationStart = AmmoComponent->GetComponentLocation();
-		FVector LocationEnd = LocationStart + AmmoComponent->GetForwardVector() * 5000;
+		FVector ComponentLocation = FirstPersonCameraComponent->GetComponentLocation();
+		FVector LocationStart = ComponentLocation;
+		FVector LocationEnd = ComponentLocation + FirstPersonCameraComponent->GetForwardVector() * 5000;
 		FHitResult OutHit;
-		UWorld* World = AmmoComponent->GetWorld();
 		ETraceTypeQuery TraceChannel = UEngineTypes::ConvertToTraceType(ECC_Visibility);
-		UKismetSystemLibrary::LineTraceSingle(World, LocationStart,
+		UKismetSystemLibrary::LineTraceSingle(GetWorld(), LocationStart,
 		                                      LocationEnd, TraceChannel, false, TArray<AActor*>(),
-		                                      EDrawDebugTrace::Type::ForDuration, OutHit, true, FLinearColor::Red,
-		                                      FLinearColor::Green, 0.1f);
-		UE_LOG(LogTemp, Warning, TEXT("[wyh] [%s] Line Trace"), *FString(__FUNCTION__));
+		                                      EDrawDebugTrace::Type::ForOneFrame, OutHit, true, FLinearColor::Red,
+		                                      FLinearColor::Green, 0.5f);
+		// UE_LOG(LogTemp, Warning, TEXT("[wyh] [%s] Line Trace"), *FString(__FUNCTION__));
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("[wyh] [%s] AmmoComponent:%p"), *FString(__FUNCTION__), AmmoComponent);
 }

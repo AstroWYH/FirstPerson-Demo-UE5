@@ -16,6 +16,7 @@ class USoundBase;
 // Declaration of the delegate that will be called when the Primary Action is triggered
 // It is declared as dynamic so it can be accessed also in Blueprints
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnUseItem);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FJumpActionDelegate);
 
 UCLASS(config=Game)
 class ADemoCharacter : public ACharacter
@@ -40,6 +41,9 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOnUseItem OnUseItem;
 
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FJumpActionDelegate JumpActionDelegate;
+	
 	UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
 	UPrimitiveComponent* AmmoComponent;
 
@@ -64,7 +68,12 @@ public:
 	void OnRifleOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	                    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
 	                    const FHitResult& SweepResult);
-
+	
+	TArray<FTransform> SceneInitState;
+	
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class ADemoTarget> DemoTargetBP;
+	
 protected:
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
 	UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
@@ -77,8 +86,11 @@ protected:
 	/** Fires a projectile. */
 	void OnPrimaryAction();
 
+	void OnJump();
+
 	void DamageHealth();
 
+	UFUNCTION()
 	void ConsumeEnergy();
 
 	void ResetAmmo();
@@ -124,4 +136,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int MaxAmmoCount = 25;
+
+	bool bIsPickUp = false;
 };

@@ -11,6 +11,7 @@
 #include "DemoUIHud.h"
 #include "DemoUIPoints.h"
 #include "DemoUIAmmoCount.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 
 void UDemoMainMenu::NativeConstruct()
 {
@@ -33,8 +34,18 @@ void UDemoMainMenu::StartGame()
 {
 	UE_LOG(LogTemp, Warning, TEXT("[wyh] [%s]"), *FString(__FUNCTION__));
 
-	// Remove MainMenu
+	// Remove UI MainMenu
 	RemoveFromParent();
+
+	// Remove UI DemoCpp
+	if (UIDemoCppBP)
+	{
+		TArray<UUserWidget*> FoundWidgets;
+		UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), FoundWidgets, UIDemoCppBP);
+		check(FoundWidgets[0]);
+		UUserWidget* UIDemoCpp = FoundWidgets[0];
+		UIDemoCpp->RemoveFromParent();
+	}
 
 	// Shut Mouse Cursor
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -87,11 +98,6 @@ void UDemoMainMenu::AfterDelay()
 	{
 		UDemoUIPoints* UIPoints = CreateWidget<UDemoUIPoints>(GetWorld(), UIPointsBP);
 		UIPoints->AddToViewport();
-	}
-	if (UIAmmoBP)
-	{
-		UDemoUIAmmoCount* UIAmmo = CreateWidget<UDemoUIAmmoCount>(GetWorld(), UIAmmoBP);
-		UIAmmo->AddToViewport();
 	}
 }
 

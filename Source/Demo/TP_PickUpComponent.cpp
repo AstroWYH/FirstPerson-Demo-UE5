@@ -2,6 +2,10 @@
 
 #include "TP_PickUpComponent.h"
 
+#include "DemoUIAmmoCount.h"
+#include "DemoResetScene.h"
+#include "DemoResetPoints.h"
+
 UTP_PickUpComponent::UTP_PickUpComponent()
 {
 	// Setup the Sphere Collision
@@ -22,7 +26,25 @@ void UTP_PickUpComponent::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedCo
 {
 	// Checking if it is a First Person Character overlapping
 	ADemoCharacter* Character = Cast<ADemoCharacter>(OtherActor);
-	
+
+	if (UIAmmoBP)
+	{
+		UDemoUIAmmoCount* UIAmmo = CreateWidget<UDemoUIAmmoCount>(GetWorld(), UIAmmoBP);
+		UIAmmo->AddToViewport();
+	}
+
+	if (UIResetSceneBP)
+	{
+		UDemoResetScene* UIResetScene = CreateWidget<UDemoResetScene>(GetWorld(), UIResetSceneBP);
+		UIResetScene->AddToViewport();
+	}
+
+	if (UIResetPointsBP)
+	{
+		UDemoResetPoints* UIResetPoints = CreateWidget<UDemoResetPoints>(GetWorld(), UIResetPointsBP);
+		UIResetPoints->AddToViewport();
+	}
+
 	if (Character != nullptr)
 	{
 		// Notify that the actor is being picked up
