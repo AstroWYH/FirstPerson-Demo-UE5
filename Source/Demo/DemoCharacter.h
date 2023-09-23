@@ -16,6 +16,7 @@ class USoundBase;
 // Declaration of the delegate that will be called when the Primary Action is triggered
 // It is declared as dynamic so it can be accessed also in Blueprints
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnUseItem);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FJumpActionDelegate);
 
 UCLASS(config=Game)
@@ -43,7 +44,7 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FJumpActionDelegate JumpActionDelegate;
-	
+
 	UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
 	UPrimitiveComponent* AmmoComponent;
 
@@ -54,7 +55,14 @@ public:
 
 	float GetHealth() { return Health; }
 
-	float GetEnergy() const { return Energy; }
+	void SetHealth(float NewHealth);
+
+	float GetEnergy() { return Energy; }
+
+	void SetEnergy(float NewEnergy);
+
+	UFUNCTION()
+	void ConsumeEnergyForJump();
 
 	int GetAmmoCount() const { return AmmoCount; }
 
@@ -68,12 +76,15 @@ public:
 	void OnRifleOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	                    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
 	                    const FHitResult& SweepResult);
-	
+
 	TArray<FTransform> SceneInitState;
-	
+
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class ADemoTarget> DemoTargetBP;
-	
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class AActor> DemoRifleBP;
+
 protected:
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
 	UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
@@ -88,12 +99,7 @@ protected:
 
 	void OnJump();
 
-	void DamageHealth();
-
-	UFUNCTION()
-	void ConsumeEnergy();
-
-	void ResetAmmo();
+	void ResetState();
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);
@@ -138,4 +144,19 @@ protected:
 	int MaxAmmoCount = 25;
 
 	bool bIsPickUp = false;
+
+	ADemoTarget* TargetA;
+	ADemoTarget* TargetB;
+
+	int TargetFreq = 100;
+	int TargetRadius = 500;
+	float RunningTime = 0.0f;
+
+	FVector TargetALocation;
+	FRotator TargetARotation;
+	FVector TargetAScale;
+
+	FVector TargetBLocation;
+	FRotator TargetBRotation;
+	FVector TargetBScale;
 };

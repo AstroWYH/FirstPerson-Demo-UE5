@@ -60,4 +60,15 @@ void ADemoTarget::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 		UE_LOG(LogTemp, Warning, TEXT("[wyh] [%s] Points:%d"), *FString(__FUNCTION__),
 		       FirstPerson->GetPoints());
 	}
+
+	ADemoCharacter* FirstPerson = Cast<ADemoCharacter>(OtherActor);
+	if (FirstPerson)
+	{
+		float Health = FirstPerson->GetHealth();
+		Health -= 0.01f;
+		FirstPerson->SetHealth(Health);
+
+		UE_LOG(LogTemp, Warning, TEXT("[wyh] Attacked by Target, Health:%d"), *FString(__FUNCTION__),
+		       FirstPerson->GetHealth());
+	}
 }

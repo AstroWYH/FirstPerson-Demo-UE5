@@ -3,6 +3,7 @@
 #include "DemoCharacter.h"
 #include "DemoProjectile.h"
 #include "DemoTarget.h"
+#include "TP_PickUpComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -11,8 +12,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/InputSettings.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
-
 
 //////////////////////////////////////////////////////////////////////////
 // ADemoCharacter
@@ -70,7 +71,7 @@ void ADemoCharacter::BeginPlay()
 	}
 
 	JumpActionDelegate.AddDynamic(this, &ACharacter::Jump);
-	JumpActionDelegate.AddDynamic(this, &ADemoCharacter::ConsumeEnergy);
+	JumpActionDelegate.AddDynamic(this, &ADemoCharacter::ConsumeEnergyForJump);
 }
 
 //////////////////////////////////////////////////////////////////////////// Input
@@ -87,11 +88,12 @@ void ADemoCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInpu
 	// Bind fire event
 	PlayerInputComponent->BindAction("PrimaryAction", IE_Pressed, this, &ADemoCharacter::OnPrimaryAction);
 
-	// Damage Health
-	PlayerInputComponent->BindAction("F", IE_Pressed, this, &ADemoCharacter::DamageHealth);
+	// Reset State
+	PlayerInputComponent->BindAction("R", IE_Pressed, this, &ADemoCharacter::ResetState);
 
-	// Reset Ammo
-	PlayerInputComponent->BindAction("R", IE_Pressed, this, &ADemoCharacter::ResetAmmo);
+	// AccSpeed
+	PlayerInputComponent->BindAction("MovementSpeedSwitch", IE_Pressed, this, &ADemoCharacter::AccSpeed);
+	PlayerInputComponent->BindAction("MovementSpeedSwitch", IE_Released, this, &ADemoCharacter::ResetSpeed);
 
 	// Bind movement events
 	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &ADemoCharacter::MoveForward);
@@ -104,31 +106,93 @@ void ADemoCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInpu
 	PlayerInputComponent->BindAxis("Look Up / Down Mouse", this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("Turn Right / Left Gamepad", this, &ADemoCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("Look Up / Down Gamepad", this, &ADemoCharacter::LookUpAtRate);
-
-	// movement speed switch
-	PlayerInputComponent->BindAction("MovementSpeedSwitch", IE_Pressed, this, &ADemoCharacter::AccSpeed);
-	PlayerInputComponent->BindAction("MovementSpeedSwitch", IE_Released, this, &ADemoCharacter::ResetSpeed);
 }
 
 void ADemoCharacter::OnRifleOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
                                     const FHitResult& SweepResult)
 {
-	// For enable line trace
-	bIsPickUp = true;
+	UTP_PickUpComponent* PickUpComponent = Cast<UTP_PickUpComponent>(OtherComp);
+	if (PickUpComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[wyh] [%s] UTP_PickUpComponent OverLap"), *FString(__FUNCTION__));
+		bIsPickUp = true;
 
-	TArray<AActor*> FoundActors;
-	UGameplayStatics::GetAllActorsOfClassWithTag(GetWorld(), DemoTargetBP, "DefaultTarget", FoundActors);
-	check(FoundActors[0]);
-	AActor* DefaultTarget = FoundActors[0];
-	FTransform DefaultTranslation = DefaultTarget->GetTransform();
-	FVector DefaultLocation = DefaultTranslation.GetLocation();
-	FRotator DefaultRotation = DefaultTranslation.GetRotation().Rotator();
-	FVector DefaultScale = DefaultTranslation.GetScale3D();
+		// /** -------------------------------------- Test Code --------------------------------------**/
+		// if (DemoRifleBP)
+		// {
+		// 	FString ClassName = DemoRifleBP->GetDefaultObject()->GetClass()->GetName();
+		// 	// ClassName: BP_Rifle_C OtherActor: BP_RiflePickUp_C_1
+		// 	UE_LOG(LogTemp, Warning, TEXT("[wyh] [%s] ClassName: %s OtherActor: %s"), *FString(__FUNCTION__),
+		// 	       *ClassName, *OtherActor->GetName());
+		// }
 
-	FVector ALocation = DefaultLocation - FVector();
+		// Get Default Target Info
+		TArray<AActor*> FoundActors;
+		UGameplayStatics::GetAllActorsOfClassWithTag(GetWorld(), DemoTargetBP, "DefaultTarget", FoundActors);
+		check(FoundActors[0]);
+		AActor* DefaultTarget = FoundActors[0];
+		UStaticMeshComponent* DefalutTargetMesh = DefaultTarget->FindComponentByClass<UStaticMeshComponent>();
+		UMaterialInterface* DefalutTargetMaterial = LoadObject<UMaterialInterface>(
+			nullptr, TEXT("Material'/Game/StarterContent/Props/Materials/M_Lamp.M_Lamp'"));
+		DefalutTargetMesh->SetMaterial(1, DefalutTargetMaterial);
 
-	ADemoTarget* SpawnTargetA = GetWorld()->SpawnActor<ADemoTarget>(DemoTargetBP, DefaultTarget->GetTransform());
+		FTransform DefaultTranslation = DefaultTarget->GetTransform();
+		FVector DefaultLocation = DefaultTranslation.GetLocation();
+		FRotator DefaultRotation = DefaultTranslation.GetRotation().Rotator();
+		FVector DefaultScale = DefaultTranslation.GetScale3D();
+
+		// UE_LOG(LogTemp, Warning,
+		//        TEXT(
+		// 	       "[wyh] [%s] DefaultTranslation:%s DefaultLocation:%s DefaultRotation:%s DefaultScale:%s DefaultLocation.Z:%f"
+		//        ),
+		//        *FString(__FUNCTION__),
+		//        *DefaultTranslation.ToString(), *DefaultLocation.ToString(), *DefaultRotation.ToString(),
+		//        *DefaultScale.ToString(), DefaultLocation.Z);
+
+		// Spawn TargetA
+		TargetA = GetWorld()->SpawnActor<ADemoTarget>(
+			DemoTargetBP,
+			FTransform(FRotator(DefaultRotation.Pitch, DefaultRotation.Yaw + 45.0f, DefaultRotation.Roll),
+			           FVector(DefaultLocation.X - 200.0f, DefaultLocation.Y + 400.0f, DefaultLocation.Z),
+			           DefaultScale));
+
+		FTransform TargetATranslation = TargetA->GetTransform();
+		TargetALocation = TargetATranslation.GetLocation();
+		TargetARotation = TargetATranslation.GetRotation().Rotator();
+		TargetAScale = TargetATranslation.GetScale3D();
+
+		// USceneComponent* const SceneRootComponent = TargetA->GetRootComponent();
+		// UE_LOG(LogTemp, Warning,
+		//        TEXT(
+		// 	       "[wyh] [%s] TargetATranslation:%s TargetALocation:%s TargetARotation:%s TargetAScale:%s TargetALocation.Z:%f SceneRootComponent:%s"
+		//        ),
+		//        *FString(__FUNCTION__),
+		//        *TargetATranslation.ToString(), *TargetALocation.ToString(), *TargetARotation.ToString(),
+		//        *TargetAScale.ToString(), TargetALocation.Z, *SceneRootComponent->GetName());
+
+		UStaticMeshComponent* TargetAMesh = TargetA->FindComponentByClass<UStaticMeshComponent>();
+		UMaterialInterface* TargetAMaterial = LoadObject<UMaterialInterface>(
+			nullptr, TEXT("Material'/Game/StarterContent/Materials/M_Tech_Hex_Tile_Pulse.M_Tech_Hex_Tile_Pulse'"));
+		TargetAMesh->SetMaterial(1, TargetAMaterial);
+
+		// Spawn TargetB
+		TargetB = GetWorld()->SpawnActor<ADemoTarget>(
+			DemoTargetBP,
+			FTransform(FRotator(DefaultRotation.Pitch, DefaultRotation.Yaw + 90.0f, DefaultRotation.Roll),
+			           FVector(DefaultLocation.X + 200.0f, DefaultLocation.Y - 400.0f, DefaultLocation.Z),
+			           DefaultScale));
+
+		FTransform TargetBTranslation = TargetB->GetTransform();
+		TargetBLocation = TargetBTranslation.GetLocation();
+		TargetBRotation = TargetBTranslation.GetRotation().Rotator();
+		TargetBScale = TargetBTranslation.GetScale3D();
+
+		UStaticMeshComponent* TargetBMesh = TargetB->FindComponentByClass<UStaticMeshComponent>();
+		UMaterialInterface* TargetBMaterial = LoadObject<UMaterialInterface>(
+			nullptr, TEXT("Material'/Game/StarterContent/Materials/M_ColorGrid_LowSpec.M_ColorGrid_LowSpec'"));
+		TargetBMesh->SetMaterial(1, TargetBMaterial);
+	}
 }
 
 void ADemoCharacter::OnPrimaryAction()
@@ -143,20 +207,26 @@ void ADemoCharacter::OnJump()
 	JumpActionDelegate.Broadcast();
 }
 
-void ADemoCharacter::DamageHealth()
+void ADemoCharacter::SetHealth(float NewHealth)
 {
-	Health -= 0.25f;
+	Health = NewHealth;
 }
 
-void ADemoCharacter::ConsumeEnergy()
+void ADemoCharacter::SetEnergy(float NewEnergy)
 {
-	UE_LOG(LogTemp, Warning, TEXT("[wyh] [%s]"), *FString(__FUNCTION__));
-	Energy -= 0.25f;
+	Energy = NewEnergy;
 }
 
-void ADemoCharacter::ResetAmmo()
+void ADemoCharacter::ConsumeEnergyForJump()
+{
+	Energy -= 0.1f;
+}
+
+void ADemoCharacter::ResetState()
 {
 	AmmoCount = MaxAmmoCount;
+	Health = 1.0f;
+	Energy = 1.0f;
 }
 
 void ADemoCharacter::MoveForward(float Value)
@@ -191,6 +261,7 @@ void ADemoCharacter::LookUpAtRate(float Rate)
 
 void ADemoCharacter::AccSpeed()
 {
+	UE_LOG(LogTemp, Warning, TEXT("[wyh] [%s] AccSpeed"), *FString(__FUNCTION__));
 	UCharacterMovementComponent* CharacterMovementPtr = GetCharacterMovement();
 
 	if (CharacterMovementPtr)
@@ -211,6 +282,13 @@ void ADemoCharacter::ResetSpeed()
 
 void ADemoCharacter::Tick(float DeltaSeconds)
 {
+	RunningTime += DeltaSeconds;
+
+	if (GetCharacterMovement()->MaxWalkSpeed > 1000.0f)
+	{
+		Energy -= 0.001f;
+	}
+
 	if (bIsPickUp)
 	{
 		FVector ComponentLocation = FirstPersonCameraComponent->GetComponentLocation();
@@ -222,6 +300,27 @@ void ADemoCharacter::Tick(float DeltaSeconds)
 		                                      LocationEnd, TraceChannel, false, TArray<AActor*>(),
 		                                      EDrawDebugTrace::Type::ForOneFrame, OutHit, true, FLinearColor::Red,
 		                                      FLinearColor::Green, 0.5f);
-		// UE_LOG(LogTemp, Warning, TEXT("[wyh] [%s] Line Trace"), *FString(__FUNCTION__));
+
+		// Set TargetA Location & Rotator
+		FVector LocationA;
+		LocationA.X = TargetRadius * UKismetMathLibrary::DegCos(TargetFreq * RunningTime) + TargetALocation.X;
+		LocationA.Y = -1 * TargetRadius * UKismetMathLibrary::DegSin(TargetFreq * RunningTime) + TargetALocation.Y;
+		LocationA.Z = TargetALocation.Z;
+		TargetA->SetActorLocation(LocationA);
+		FRotator RotatorA;
+		RotatorA = TargetARotation;
+		RotatorA.Yaw = TargetFreq * RunningTime + TargetARotation.Yaw;
+		TargetA->SetActorRotation(RotatorA);
+
+		// Set TargetB Location & Rotator
+		FVector LocationB;
+		LocationB.X = TargetRadius * UKismetMathLibrary::DegCos(TargetFreq * RunningTime) + TargetBLocation.X;
+		LocationB.Y = -1 * TargetRadius * UKismetMathLibrary::DegSin(TargetFreq * RunningTime) + TargetBLocation.Y;
+		LocationB.Z = TargetBLocation.Z;
+		TargetB->SetActorLocation(LocationB);
+		FRotator RotatorB;
+		RotatorB = TargetBRotation;
+		RotatorB.Yaw = TargetFreq * RunningTime + TargetBRotation.Yaw;
+		TargetB->SetActorRotation(RotatorB);
 	}
 }
