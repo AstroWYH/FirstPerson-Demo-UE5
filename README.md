@@ -1,6 +1,6 @@
 # 【UE5 C++】蓝图/C++完全对照项目 游戏公司程序新人作业
 
-![动画](https://github.com/user-attachments/assets/8dc27329-f48f-4f3b-8d7d-05df97579cb5)
+![动画](bpcpp.gif)
 
 ## 项目简介
 
