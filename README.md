@@ -4,7 +4,7 @@
 
 ## 项目简介
 
-本仓库对应B站视频[【UE5 C++】蓝图/C++完全对照项目 游戏公司程序新人作业](https://www.bilibili.com/video/BV1QsRVYvEcn/?spm_id_from=333.788.videopod.sections&vd_source=ab67845b846f1632f14b7e2c4a6c5935)的完整实现工程。旨在通过清晰的对照形式，帮助开发者尤其是游戏公司新人快速掌握UE5中蓝图与C++在实现相同功能时的差异与联系，助力新人更好地完成程序相关作业，提升对UE5开发的理解。
+本仓库旨在通过清晰的对照形式，帮助开发者尤其是游戏公司新人快速掌握UE5中蓝图与C++在实现相同功能时的差异与联系，助力新人更好地完成程序相关作业，提升对UE5开发的理解。
 
 ## 核心内容
 
@@ -49,13 +49,6 @@
 - 视频链接：[【UE5 C++】蓝图/C++完全对照项目 游戏公司程序新人作业](https://www.bilibili.com/video/BV1QsRVYvEcn/?spm_id_from=333.788.videopod.sections&vd_source=ab67845b846f1632f14b7e2c4a6c5935)
 - 系列教程：查看作者其他UE5 C++教程（背包系统、网络同步、Shader开发等）
 - 参考项目：作者推荐的UE5相关学习项目（如GAS相关项目、Mass框架项目等）
-
-## 作者信息
-
-前华为/百度程序员，专注分享UE5 C++游戏开发实战知识。
-
-- 更多工程与源码：[个人仓库](https://github.com/AstroWYH)
-- B站主页：[晚上做游戏](https://space.bilibili.com/89037636?spm_id_from=333.1007.0.0)
 
 ## 许可证
 
